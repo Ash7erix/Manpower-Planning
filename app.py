@@ -163,7 +163,6 @@ manpower_requirements = {
     (skill, 0): data["manpower_requirements"][skill][0]  # Ensure Year 0 is always included
     for skill in skill_levels
 }
-
 for skill in skill_levels:
     for year in years:  # Only update for Years 1, 2, 3
         manpower_requirements[(skill, year)] = st.sidebar.number_input(
@@ -183,6 +182,52 @@ overmanning_cost = { skill: st.sidebar.number_input(f"Overmanning Cost ({skill})
 overmanning_limit = st.sidebar.number_input("Max Overmanning Allowed", min_value=0, value=data["overmanning_limit"])
 short_time_limit = st.sidebar.number_input("Max Short-Time Workers per Skill", min_value=0, value=data["short_time_limit"])
 short_time_cost = { skill: st.sidebar.number_input(f"Short-Time Cost ({skill}) (£)", min_value=0, value=data["short_time_cost"][skill]) for skill in skill_levels}
+
+
+# Display Optimization Data in Tables
+st.title("Optimization Data and Constraints:")
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("Manpower Requirements")
+    manpower_df = pd.DataFrame(data["manpower_requirements"]).T
+    manpower_df.columns = ["Current Strength", "Year 1", "Year 2", "Year 3"]
+    st.dataframe(manpower_df)
+with col2:
+    st.subheader("Redundancy & Overmanning Cost")
+    redundancy_df = pd.DataFrame.from_dict(data["redundancy_cost"], orient="index", columns=["Redundancy Cost (£)"])
+    redundancy_df["Overmanning Cost (£)"] = redundancy_df.index.map(data["overmanning_cost"])
+    st.dataframe(redundancy_df)
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.subheader("Wastage Rates")
+    wastage_df = pd.DataFrame(data["wastage_rates"]).T
+    wastage_df.index.name = "Service Time"
+    st.dataframe(wastage_df)
+with col2:
+    st.subheader("Retraining Capacity & Cost")
+    retraining_df = pd.DataFrame.from_dict(data["retraining_capacity"], orient="index", columns=["Max Workers"])
+    retraining_df["Cost (£)"] = retraining_df.index.map(data["retraining_cost"])
+    retraining_df.index.name = "Retraining Type"
+    st.dataframe(retraining_df)
+with col3:
+    st.subheader("Recruitment Capacity")
+    recruitment_df = pd.DataFrame(list(data["recruitment_capacity"].items()), columns=["Skill Level", "Max Recruited"])
+    recruitment_df.index = range(1, len(recruitment_df) + 1)
+    st.dataframe(recruitment_df)
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("Overmanning & Short-Time Work Limits")
+    limits_df = pd.DataFrame({
+        "Constraint": ["Overmanning Limit", "Short-Time Work Limit"],
+        "Value": [data["overmanning_limit"], data["short_time_limit"]]
+    })
+    st.dataframe(limits_df)
+with col2:
+    st.subheader("Short-Time Work Cost")
+    short_time_cost_df = pd.DataFrame(list(data["short_time_cost"].items()), columns=["Skill Level", "Cost per Worker (£)"])
+    short_time_cost_df.index = range(1, len(short_time_cost_df) + 1)
+    st.dataframe(short_time_cost_df)
+st.markdown("""---""")
 
 
 # MODEL SETUP
